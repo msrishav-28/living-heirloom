@@ -1,292 +1,126 @@
-# ARCHITECTURE.md — Living Heirloom
-> **Last updated:** 2026-11-06 · **Target release:** 10 November 2026 (Gnani.ai Hackathon)
+# Living Heirloom architecture
 
----
+Updated 6 November 2026. This document describes the current implementation. See the [API reference](docs/API.md) for field-level contracts and the [release checklist](RELEASE_CHECKLIST.md) for verification status.
 
-## 1. What this product does
+## System and scope
 
-**Living Heirloom** lets a family elder speak short voice recordings that are preserved, translated, and sealed into time-locked audio capsules. The capsule unlocks only on a specified future date — a wedding morning, an 18th birthday, a graduation day — and plays the ancestor's exact voice, reconstructed in the recipient's preferred Indic language.
+Living Heirloom records a consenting storyteller, conducts a five-answer interview, compiles a letter, optionally creates cloned narration, and exports a passphrase-protected timelock capsule. A recipient can open the downloaded file after its selected unlock time using the passphrase and public drand beacon.
 
-The underlying magic is three real technologies working together:
+The application uses Next.js App Router and React, TypeScript, Tailwind CSS, Zod, browser Web Crypto, idb-keyval, Silero VAD, and tlock-js. Server routes proxy Gnani speech APIs and a configurable OpenAI-compatible reasoning endpoint. Production hosting is prepared for Vercel Node.js functions, not static-only hosting. Node.js 24.x and pnpm 12.5.1 are pinned.
 
-| Layer | What it does |
-|---|---|
-| **Gnani AI** | Speech-to-text in nine Indic languages and English; voice embedding (speaker fingerprint); text-to-speech that reconstructs the original speaker's timbre |
-| **Configured Gemini Flash model** | Conducts the recorded interview — asks follow-up questions, detects hesitation, distils spoken answers into heirloom letters |
-| **drand / tlock-js** | Mathematically seals the capsule so it cannot be decrypted until a specific UTC timestamp — not by password policy, but by cryptographic proof |
+There is no application database, account system, cloud synchronization, scheduled message delivery, or global request queue. Local persistence is tied to the browser and origin. The latest compiled bundle is shown in the real capsule panel; this is not a multi-capsule library.
 
-No database. All family data lives in the user's browser (localStorage + IndexedDB). The server exists only to proxy paid API calls without exposing keys.
+## Page boundaries
 
----
+| Route                                   | Responsibility                                                                         |
+| --------------------------------------- | -------------------------------------------------------------------------------------- |
+| `/`                                     | Approved editorial landing design, with explicitly illustrative previews               |
+| `/vault`                                | Real family profiles, calibration, interview entry, and capsule workflow; starts empty |
+| `/vault/interview?mode=childhood_roots` | Real recording and adaptive interview screen                                           |
+| `/demo`                                 | Fictional family profiles, historical examples, and simulated interactions             |
 
-## 2. Technology stack
+The real vault does not depend on the legacy mock store. Demo files remain in their existing locations where needed for the preserved design; the directory name alone does not establish production ownership. `lib/local-crypto.ts` and `lib/voice-synth.ts` are legacy demonstration helpers. They must not be substituted for production capsule encryption or Gnani narration.
 
-| Concern | Choice | Why |
-|---|---|---|
-| Frontend framework | Next.js 16.4.3 (App Router) | File-system routing, React Server Components, Edge-ready |
-| Language | TypeScript 5.7 strict | Type safety at compile time; no `any` escapes |
-| Styling | Tailwind CSS v4 | Utility-first; zero runtime CSS-in-JS |
-| Package manager | pnpm 12 | Workspace support; fast installs |
-| Runtime / Deploy | Vercel serverless functions | Zero-ops; cold start acceptable for voice ops |
-| Analytics | @vercel/analytics | Privacy-safe; already integrated |
-| Schema validation | Zod | Runtime type safety on all API boundaries |
-| Local storage | idb-keyval (IndexedDB) | Bigger than localStorage; async; works offline |
-| Voice activity detection | @ricky0123/vad-web (Silero VAD) | WASM; runs in-browser; no audio sent to server until speech ends |
-| Crypto (browser) | Web Crypto API (AES-256-GCM + PBKDF2) | Native; no library needed; zero-dependency |
-| Crypto (timelock) | tlock-js + drand chain | Drand random beacon; timelock encryption; truly time-gated |
-| Speech (server) | Gnani AI Vachana API v3 | Indic-language STT, TTS, voice clone |
-| LLM (server) | Configured Gemini Flash model via OpenAI-compatible endpoint | Free tier at Google AI Studio; multimodal; low latency |
+## Module ownership
 
----
+| Module                                       | Responsibility                                                                                       |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `lib/product-contracts.ts`                   | Zod schemas, supported languages, interview modes, API and capsule envelopes                         |
+| `hooks/useHeirloomStudio.ts`                 | Browser state machine, recording, provider sequence, draft recovery, compilation, synthesis, sealing |
+| `lib/browser-api.ts`                         | Single-flight guard within one browser JavaScript instance                                           |
+| `lib/audio/`                                 | VAD lifecycle, WAV encoding, acoustic analysis                                                       |
+| `lib/gnani/`                                 | Retry helper, provider calls, multilingual TTS normalization                                         |
+| `lib/server/`                                | Shared validation, configuration, safe errors, provider requests, WAV response handling              |
+| `lib/crypto/heirloom-vault.ts`               | Actual AES-GCM plus drand timelock seal/open protocol                                                |
+| `lib/storage/local-draft-store.ts`           | IndexedDB persistence for sessions, audio, embeddings, and latest bundle                             |
+| `app/vault/page.tsx`                         | Real profile and workspace orchestration                                                             |
+| `components/vault/interview-room.tsx`        | Live waveform, acoustic HUD, recording and answer controls                                           |
+| `components/vault/capsule-release-panel.tsx` | Real letter, narration, sealing, download, and opening                                               |
+| `components/ui/`                             | Shared themed controls, including the custom picker                                                  |
+| `scripts/copy-vad-assets.mjs`                | Copies installed VAD/ONNX assets before dev and build                                                |
 
-## 3. Repository layout
+See the [developer guide](docs/DEVELOPMENT.md) for the complete storage map and contributor workflow.
 
-```
-core-innovation-development/
-├── app/
-│   ├── layout.tsx                 # Root layout — metadata, fonts, analytics
-│   ├── page.tsx                   # Landing page
-│   ├── globals.css                # Tailwind base + custom font vars
-│   └── vault/
-│       ├── page.tsx               # Vault shell — 4 workspace tabs
-│       └── interview/
-│           └── page.tsx           # (Phase 6) Full-screen voice interview
-│
-├── components/
-│   ├── hero-section.tsx           # Landing hero
-│   ├── problem-narrative-section.tsx
-│   ├── voice-preservation-section.tsx
-│   ├── timelock-capsule-section.tsx
-│   ├── adaptive-interview-section.tsx
-│   ├── dark-manifesto-section.tsx
-│   ├── footer-section.tsx
-│   ├── navbar.tsx
-│   ├── recording-studio-modal.tsx # (Phase 7) Wire to real VAD
-│   ├── calm-motion.tsx            # Reveal animation primitives
-│   ├── living-hue-atmosphere.tsx
-│   ├── theme-toggle.tsx
-│   └── vault/
-│       ├── family-archive-workspace.tsx   # Tab 01
-│       ├── voice-cloning-lab-workspace.tsx # Tab 02 — wire real embedding
-│       ├── biographer-interview-workspace.tsx # Tab 03 — link to /vault/interview
-│       └── capsule-vault-workspace.tsx    # Tab 04 — wire real export
-│
-├── lib/
-│   ├── heirloom-vault-store.ts    # ✅ React state + seed data (Indian family)
-│   ├── local-crypto.ts            # ✅ AES-256-GCM browser encryption
-│   ├── voice-synth.ts             # Offline demo TTS (kept as labelled fallback)
-│   ├── product-contracts.ts       # (Phase 1) Zod schemas — all API contracts
-│   ├── gnani/
-│   │   ├── client.ts              # (Phase 1) callGnaniWithRetry + GnaniUpstreamError
-│   │   └── text-normalizer.ts     # (Phase 1) Digit/currency/date normalisation for TTS
-│   ├── audio/
-│   │   ├── wav-encoder.ts         # (Phase 3) PCM → WAV blob; 28s hard cap
-│   │   ├── acoustic-prosody.ts    # (Phase 3) RMS, pause, F0 jitter analysis
-│   │   └── vad-recorder.ts        # (Phase 3) Silero VAD wrapper → Float32Array
-│   ├── crypto/
-│   │   └── heirloom-vault.ts      # (Phase 4) sealHeirloom / openHeirloom with tlock
-│   └── storage/
-│       └── local-draft-store.ts   # (Phase 4) IndexedDB via idb-keyval
-│
-├── hooks/
-│   └── useHeirloomStudio.ts       # (Phase 5) Master state machine
-│
-├── app/api/
-│   ├── health/route.ts            # (Phase 2) GET — config check; no paid calls
-│   ├── gnani/
-│   │   ├── stt/route.ts           # (Phase 2) POST multipart → Gnani Prisma STT
-│   │   ├── tts/route.ts           # (Phase 2) POST JSON → Gnani Timbre TTS → WAV
-│   │   └── voice-clone/
-│   │       ├── embedding/route.ts # (Phase 2) POST multipart → [1,768] embedding
-│   │       └── synthesize/route.ts# (Phase 2) POST JSON → vachana-vc-v1 → WAV
-│   └── interview/
-│       ├── turn/route.ts          # (Phase 2) POST → Gemini → next question
-│       └── compile-chapter/route.ts # (Phase 2) POST → Gemini → heirloom letter
-│
-├── ARCHITECTURE.md                # ← this file
-├── AGENTS.md                      # Agent instructions
-├── .env.example                   # Non-secret template
-├── plan.md                        # Original product spec
-├── next.config.mjs
-├── tsconfig.json
-├── package.json
-└── pnpm-lock.yaml
-```
+## Recording and interview flow
 
----
+1. A user selects a storyteller and grants explicit consent before microphone access or external processing.
+2. Voice calibration records three passages of approximately eight seconds. The embedding endpoint returns a validated `[1, 768]` tensor representation, stored by member ID. Failed embedding creation can reuse saved clips.
+3. The interview records 16 kHz mono PCM. VAD ends an answer after four seconds of silence; manual stop and a 28-second hard cap also apply. Tracks and audio resources are released on completion, cancellation, or error.
+4. The WAV and telemetry are saved locally before provider calls. STT creates a transcript; the reasoning route receives text, telemetry, mode, and history. Original audio fields are emptied before reasoning requests.
+5. The reasoning response contains a follow-up question and distilled excerpt. Gnani TTS speaks the question; blocked autoplay has a manual playback path. The completed turn is persisted. A failed request can retry the saved answer.
+6. After exactly five answers, compilation produces a 150–250-word letter. Creating a recipient-language version uses compilation in that language and clears previously generated cloned narration.
+7. Optional cloned narration uses the selected speaker's real embedding. A capsule can also preserve original recordings without a voice embedding or cloned track.
 
-## 4. Data flow
+A restored session is scoped by member and mode. The quick studio uses its own `my-voice` member ID. Successful calibration persists independently from the current interview session.
 
-### 4a. Voice calibration (speaker fingerprint)
+### Acoustic telemetry
 
-```
-Browser mic
-  → Silero VAD (vad-recorder.ts) — speech end detection, 28s cap
-  → Float32Array PCM 16kHz mono
-  → wav-encoder.ts → WAV Blob
-  → POST /api/gnani/voice-clone/embedding (multipart)
-    → Gnani vachana-vc-v1 → [1, 768] embedding tensor
-  → stored in IndexedDB (local-draft-store.ts) for session
-```
+Analysis uses 480-sample frames, equivalent to 30 ms at 16 kHz. RMS is expressed in dBFS with a -60 dB floor. Frames below -40 dB are silent. Consecutive silent frames determine `maxPauseMs`; the silent-frame fraction determines `silenceRatio`. Autocorrelation estimates pitch, and its coefficient of variation produces `pitchJitterPct`.
 
-### 4b. Interview turn
+| State                 | Rule                                                                |
+| --------------------- | ------------------------------------------------------------------- |
+| `hesitant_vulnerable` | Pause exceeds 2000 ms or silence ratio exceeds 0.45                 |
+| `animated_engaged`    | Otherwise, pitch jitter exceeds 15% and silence ratio is below 0.25 |
+| `calm_reflective`     | All remaining inputs                                                |
 
-```
-Speaker presses "Begin Turn"
-  → Silero VAD records speech
-  → WAV blob → POST /api/gnani/stt → transcript text
-  → acoustic-prosody.ts analyses PCM → AcousticTelemetry
-  → POST /api/interview/turn (transcript + telemetry + history)
-    → Configured Gemini Flash model → next question text + distilled excerpt
-  → POST /api/gnani/tts (next question text)
-    → Gnani Timbre v3 → WAV audio → plays in browser
-  → Turn record appended to session history
-After turn 5 → POST /api/interview/compile-chapter → heirloom letter
-```
+These labels are signal heuristics for question pacing. They do not diagnose emotion or health.
 
-### 4c. Capsule sealing
+## Server boundary
 
-```
-heirloom-vault.ts sealHeirloom(bundle, passphrase, unlockAtUtc):
-  1. PBKDF2-SHA256 (210,000 iter) → 256-bit AES key from passphrase
-  2. AES-256-GCM encrypt bundle → ciphertext + IV + salt + auth tag
-  3. tlock-js: compute drand round for unlockAtUtc
-  4. tlock encrypt ciphertext → timelock envelope
-  5. JSON envelope saved to IndexedDB; user downloads as .heirloom file
+Seven routes are implemented. All responses use `Cache-Control: private, no-store`. Inputs are validated before provider configuration checks and paid calls; errors use a shared safe envelope. Browser Origin headers, when present, must match the request origin. This is not user authentication.
 
-openHeirloom(file, passphrase):
-  1. Parse JSON envelope
-  2. tlock decrypt (fails if current time < unlockAtUtc)
-  3. AES-256-GCM decrypt with PBKDF2-derived key from passphrase
-  4. Return plaintext bundle
-```
+| Method and route                         | Processing                                                |
+| ---------------------------------------- | --------------------------------------------------------- |
+| `GET /api/health`                        | Configuration presence and timestamp; no provider request |
+| `POST /api/gnani/stt`                    | Consented WAV and language to Prisma v3.0 STT             |
+| `POST /api/gnani/voice-clone/embedding`  | Three consented clips to vachana-vc-v1 embedding          |
+| `POST /api/gnani/tts`                    | Normalized text to Timbre v3.0 narration                  |
+| `POST /api/gnani/voice-clone/synthesize` | Consented text and embedding to cloned narration          |
+| `POST /api/interview/turn`               | Transcript, mode, telemetry, and history to reasoning     |
+| `POST /api/interview/compile-chapter`    | Five turns to a recipient-addressed letter                |
 
----
+The six provider routes explicitly use Node.js and a 60-second maximum duration. Gnani calls use a 25-second request timeout, reasoning calls 30 seconds. HTTP 429 from Gnani retries once after 1500 ms. Browser locking prevents overlapping actions within one JavaScript instance; independent tabs, devices, and serverless instances can still overlap.
 
-## 5. API routes specification
+Generated WAV output is accumulated and validated before response headers are returned, capped at 15 MB, then delivered in bounded 64 KiB stream chunks without a Content-Length header. This supports streamed hosting responses; it is not progressive playback directly from the provider. Incoming recordings remain capped at 28 seconds. Exact request formats, limits, and the nine error codes are documented in the [API reference](docs/API.md).
 
-All routes share these invariants:
-- `Cache-Control: private, no-store`
-- Zod-validate all inputs before touching env vars
-- Return `ApiErrorEnvelopeSchema` on all errors (never raw exceptions)
-- Never include `GNANI_API_KEY` in any response body or error message
-- Respond `CONFIG_MISSING` if required env var is absent (not 500)
+## Contracts and languages
 
-| Route | Method | Auth | Description |
-|---|---|---|---|
-| `/api/health` | GET | none | Checks env vars present; never calls paid APIs |
-| `/api/gnani/stt` | POST multipart | server-side key | Audio → transcript via Gnani Prisma v3 |
-| `/api/gnani/tts` | POST JSON | server-side key | Text → WAV via Gnani Timbre v3 |
-| `/api/gnani/voice-clone/embedding` | POST multipart | server-side key | 3 clips → [1,768] embedding |
-| `/api/gnani/voice-clone/synthesize` | POST JSON | server-side key | Text + embedding → voice-cloned WAV |
-| `/api/interview/turn` | POST JSON | server-side key | Turn history → Gemini → next question |
-| `/api/interview/compile-chapter` | POST JSON | server-side key | Full session → Gemini → heirloom letter |
+`lib/product-contracts.ts` is the source of truth for persisted and network contracts. Ten language codes are supported: `en-IN`, `hi-IN`, `ta-IN`, `kn-IN`, `te-IN`, `ml-IN`, `mr-IN`, `bn-IN`, `gu-IN`, and `pa-IN`.
 
----
+Seven interview mode IDs are supported: `childhood_roots`, `life_wisdom`, `turning_point`, `love_and_family`, `cross_lingual_bridge`, `milestone_letter`, and `gratitude_unsaid`. Each requires five completed answers before compilation.
 
-## 6. Concurrency & rate limits
+Do not infer additional provider languages from historical copy or automatically translate text in the TTS endpoint. Recipient-language letter creation is a separate reasoning operation. Speakers should review generated wording and pronunciation.
 
-Gnani allows **1 concurrent request per API key**. Because Vercel serverless functions are stateless, an in-process queue/singleton does not work.
+## Storage and privacy
 
-**Chosen strategy (no Redis):**
-1. Auto-retry once after 1500ms on HTTP 429 (`callGnaniWithRetry`)
-2. UI flight-lock: disable voice action buttons while a request is in-flight (prevents duplicate submissions from the browser)
+Real profiles use localStorage key `living-heirloom-real-members-v1`. Theme and legacy demo state use separate keys. IndexedDB database `living-heirloom-drafts`, object store `drafts`, holds sessions, pending and calibration WAVs, embeddings, the latest bundle, and latest sealed file.
 
-This is intentionally simple for the hackathon scope. A production system would add a Redis-backed queue or Vercel KV.
+Drafts, transcripts, and reusable embeddings are not encrypted at rest. Clearing browser site data removes them; downloaded backups are separate. Localhost, preview URLs, the production hostname, and custom domains have separate storage.
 
----
+Gnani receives submitted voice/text/embedding inputs. Reasoning receives transcript, telemetry, and interview context. The application does not intentionally persist archive contents on its server, but hosting and provider retention are governed by their services. Vercel Analytics is integrated in production. There is no verified zero-retention enclave guarantee. See [privacy and data handling](docs/PRIVACY.md).
 
-## 7. Supported languages
+## Capsule protocol
 
-Exactly **10 languages** — what Gnani AI actually supports. No more, no fewer.
+`sealHeirloom` validates the bundle and passphrase, then:
 
-| Code | Language | BCP-47 |
-|---|---|---|
-| EN | English | `en-IN` |
-| HI | Hindi | `hi-IN` |
-| TA | Tamil | `ta-IN` |
-| KN | Kannada | `kn-IN` |
-| TE | Telugu | `te-IN` |
-| ML | Malayalam | `ml-IN` |
-| MR | Marathi | `mr-IN` |
-| BN | Bengali | `bn-IN` |
-| GU | Gujarati | `gu-IN` |
-| PA | Punjabi | `pa-IN` |
+1. Derives an AES-256 key using PBKDF2-SHA256, 210,000 iterations, and a fresh random 16-byte salt.
+2. Encrypts the serialized bundle with AES-256-GCM and a fresh random 12-byte IV. Capsule metadata is authenticated as additional data.
+3. Timelock-encrypts the AES ciphertext using tlock-js and the pinned public drand chain.
+4. Produces a schema-validated version-one `.heirloom` JSON envelope for local persistence and download.
 
-Spanish, French, Mandarin, and Japanese are **not supported** and must not appear anywhere in the product.
+The envelope exposes unlock metadata, algorithm identifiers, salt, IV, and authentication tag; the family bundle is encrypted. A passphrase of at least twelve characters is required, but length alone does not guarantee strength.
 
----
+| Parameter         | Value                                                              |
+| ----------------- | ------------------------------------------------------------------ |
+| Chain hash        | `52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971` |
+| Genesis Unix time | `1692803367`                                                       |
+| Period            | 3 seconds                                                          |
+| Round             | `Math.max(1, Math.ceil((unlockSeconds - 1692803367) / 3) + 1)`     |
 
-## 8. Environment variables
+Round one is emitted at genesis. Rounding up and accounting for that initial round avoids selecting a beacon before the requested time. `openHeirloom` checks the lock, retrieves the public beacon, reverses timelock encryption, derives the passphrase key, and authenticates/decrypts the bundle. Future locks and wrong passphrases fail. There is no recovery bypass, fully offline first opening, or guarantee of indefinite beacon availability.
 
-| Variable | Required | Scope | Description |
-|---|---|---|---|
-| `GNANI_API_KEY` | Yes | Server only | Gnani Vachana API key — never in `NEXT_PUBLIC_*` |
-| `GNANI_API_BASE_URL` | Yes | Server only | Base URL for Gnani (default: `https://api.vachana.ai`) |
-| `REASONING_API_KEY` | Yes | Server only | Google AI Studio key for Gemini |
-| `REASONING_BASE_URL` | Yes | Server only | `https://generativelanguage.googleapis.com/v1beta/openai/` |
-| `REASONING_MODEL` | Yes | Server only | `gemini-3.8-flash` |
-| `NEXT_PUBLIC_DRAND_CHAIN_HASH` | Yes | Public (client) | `52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971` |
-| `NEXT_PUBLIC_DRAND_GENESIS_TIME` | Yes | Public (client) | `1692803367` (Unix seconds) |
-| `NEXT_PUBLIC_DRAND_PERIOD_SECONDS` | Yes | Public (client) | `3` |
+## Deployment and verification
 
-**Security rule:** `GNANI_API_KEY` and `REASONING_API_KEY` must only appear in Vercel server-side environment variables, never in `NEXT_PUBLIC_*` and never committed to source control.
+The eight application environment settings are listed in `.env.example`; private provider keys remain server-only. The three public drand settings document the pinned chain; changing them alone does not migrate the capsule protocol. The [Vercel guide](docs/DEPLOYMENT.md) covers Corepack, build settings, generated assets, function limits, smoke checks, and rollback.
 
----
-
-## 9. Interview modes (7 total)
-
-| Mode ID | Display Name | Focus |
-|---|---|---|
-| `childhood_roots` | Childhood Roots | Earliest memories, home, formative places |
-| `life_wisdom` | Life Wisdom | Advice, lessons learned, regrets navigated |
-| `turning_point` | Turning Point | A defining decision or pivot moment |
-| `love_and_family` | Love & Family | Partnership, parenting, family stories |
-| `cross_lingual_bridge` | Cross-Lingual Bridge | Multilingual storytelling across generations |
-| `milestone_letter` | Milestone Letter | Addressed to a specific recipient for a future date |
-| `gratitude_unsaid` | Gratitude Unsaid | Things never said aloud to a person who matters |
-
-Each mode drives a 5-turn interview (configurable). Gemini receives the mode as a system-level context injection that shapes question style and follow-up behaviour.
-
----
-
-## 10. Crypto parameters (tlock)
-
-Drand unchained chain (testnet-independent, public):
-- **Chain hash:** `52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971`
-- **Genesis time:** `1692803367` (Unix seconds, UTC)
-- **Period:** 3 seconds per round
-- **Round formula:** `Math.max(1, Math.ceil((unlockTimestamp_seconds - 1692803367) / 3) + 1)`
-
-PBKDF2 iterations: **210,000**, as specified for this project. The unlock round is rounded up, with round one emitted at genesis, so a beacon is never selected before the requested timestamp.
-
----
-
-## 11. What is intentionally out of scope
-
-- **No database** — by design. All data lives in the user's browser. This is a privacy-first product.
-- **No user authentication** — family members share a device or manually share capsule files.
-- **No backend server** — Vercel serverless functions only. Cold-start latency is acceptable for voice operations.
-- **No real-time collaboration** — single-device workflow.
-- **No push notifications** — the capsule unlock is a manual check by the recipient.
-
----
-
-## 12. Known risks & open items
-
-| Risk | Severity | Mitigation |
-|---|---|---|
-| Gnani 429 rate limit | Medium | Auto-retry once at 1500ms + UI flight-lock |
-| Silero VAD WASM load time (~1.5MB) | Low | Lazy-load only when interview starts |
-| tlock decryption on old devices | Low | Web Crypto API baseline is 2015+; acceptable |
-| Vercel cold start on voice routes | Low | 3–5s acceptable for voice operations |
-| localStorage quota (~5MB) | Low | Only metadata stored; audio never in localStorage |
-| GitHub main synchronized | Low | Import msrishav-28/living-heirloom into Vercel |
-
-## 13. Implementation and release handoff — 6 November 2026
-
-See `RELEASE_CHECKLIST.md` for verified checks, live acceptance steps, and deployment limits. The user explicitly approved correcting language and privacy claims: there are ten supported entries, and no provider zero-retention/training guarantee is asserted. The existing language list entries and the legacy crypto module remain intact. The real capsule workflow uses `lib/crypto/heirloom-vault.ts`; labelled previews retain the older demo helpers. Working drafts are local but not encrypted at rest. Real timelock opening requires the public drand beacon.
-
-## 14. Vercel deployment configuration
-
-`README.md` contains the current import procedure. Node.js 24.x and pnpm 12.5.1 are pinned to the verified local toolchain. Enable Corepack in Vercel, use the Next.js preset and repository root, and import `main` from `msrishav-28/living-heirloom`. `vercel.json` selects the framework and build command. All six provider routes explicitly select Node.js and a 60-second budget. WAVs are validated with a 15 MB application cap and returned through a bounded streaming response rather than a buffered response that can exceed hosting limits. Live provider acceptance remains deferred by the user.
+Vitest exercises provider boundaries, audio, consent/error paths, flight locking, and real encryption with a public historical drand fixture. Local verification reports 86 passing tests across 14 files, successful type checking, and a successful production build. Real-speaker/provider acceptance and actual cloud deployment remain pending. Public paid routes have no account authentication or shared rate limiter; deployment access and provider spending controls require operator attention before public release.
