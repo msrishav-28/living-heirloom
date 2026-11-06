@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+export const maxDuration = 60
 import {
   NextTurnRequestSchema,
   NextTurnResponseSchema,

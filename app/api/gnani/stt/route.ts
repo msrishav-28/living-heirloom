@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+export const maxDuration = 60
 import { z } from 'zod'
 import { SupportedLanguageSchema } from '@/lib/product-contracts'
 import { route, gnani, ApiFailure } from '@/lib/server/api'
