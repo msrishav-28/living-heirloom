@@ -30,6 +30,17 @@ Copy `.env.example` to `.env.local`, enter private values locally, and run `pnpm
 
 There is no repository lint command. Do not claim lint passed. Prettier is available; format only relevant files, using single quotes, no semicolons, and CRLF.
 
+### Windows build-runner troubleshooting
+
+During the 6 November documentation verification, the baseline `pnpm build` passed, but later runs through the installed Windows pnpm executable caused Turbopack's CSS worker to exit before connecting. The same production build completed successfully when invoked directly with Node.js 24:
+
+```sh
+node scripts/copy-vad-assets.mjs
+node node_modules/next/dist/bin/next build
+```
+
+Use these commands to isolate that local runner failure. Both steps are necessary because direct Next.js invocation does not run the package's prebuild script. This observation does not verify the Vercel build; confirm the normal build command in the deployment log. Do not disable TypeScript checks or change application styling to work around this process error.
+
 ## Module boundaries
 
 | Location                                                                   | Owns                                                                             |

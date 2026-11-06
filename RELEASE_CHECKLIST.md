@@ -17,6 +17,8 @@ The suite checks normalization, retry timing, WAV headers and duration caps, aco
 
 There is no configured lint command. Test doubles at external boundaries do not establish live speech quality, working account credentials, or provider model access.
 
+Documentation verification reran all 86 tests and type checking successfully. The baseline `pnpm build` passed; subsequent runs through the installed Windows pnpm runner hit a Turbopack child-process failure, including outside the sandbox. The final production build passed with the same asset-copy and Next.js build steps invoked directly through Node.js 24. See the [documented workaround](docs/DEVELOPMENT.md#windows-build-runner-troubleshooting). The actual Vercel runner still needs deployment verification.
+
 ## Frontend verification already performed
 
 Desktop and 390 px mobile views were inspected in light and dark themes during implementation. The custom language picker was exercised in the running browser, and mobile header overflow was corrected. The approved editorial composition, typography, palette, workspace navigation, and card layout were retained. Colors now use shared theme variables; the logo is an animated, reduced-motion-aware waveform. Scrollbar tracks are hidden without disabling scrolling, and forced-color mode restores native affordances.
