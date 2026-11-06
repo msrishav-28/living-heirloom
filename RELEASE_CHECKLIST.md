@@ -49,9 +49,9 @@ Before exposing paid routes publicly, configure hosting access controls and spen
 
 The user approved replacing unverified provider retention guarantees with the actual local/external processing boundaries. Reconfirm provider terms before release. The protected legacy `lib/local-crypto.ts` remains unchanged and contains a sample fallback; the real capsule workflow uses `lib/crypto/heirloom-vault.ts` instead.
 
-Deployment requires your GitHub repository and Vercel account. Set all eight example environment values privately in the deployment environment, select Node 22 or newer, keep access restricted during acceptance, and test over HTTPS. This work does not publish a site or spend provider credits on your behalf.
+Deployment requires your GitHub repository and Vercel account. Set all eight example environment values privately in the deployment environment, select Node 24.x, keep access restricted during acceptance, and test over HTTPS. This work does not publish a site or spend provider credits on your behalf.
 
-Final local verification: 75 tests passed across 12 test files; production build passed with all seven API routes and the interview page. Git checkpoint `fe69aba` contains the implementation. Live API and speaker acceptance remain pending because no credentials are configured.
+Final local verification: 75 tests passed across 12 test files; production build passed with all seven API routes and the interview page. That checkpoint is retained in local recovery history; GitHub main uses the focused release commits. Live API and speaker acceptance remain pending because no credentials are configured.
 
 ## Frontend refinement and publication checkpoint
 
@@ -62,3 +62,9 @@ Native selects have been replaced with the shared keyboard-accessible picker. Th
 Seven unused generator/UI dependencies and their unreachable helper/button/configuration, five unreferenced placeholder assets, and stale v0 ignore entries were removed after reference checks. Live provider acceptance remains pending at the user’s explicit request.
 
 Final refinement validation: 79 automated tests pass across 13 files. Production build and type checks pass. The desktop vault and mobile 390px views were inspected in light/dark mode, and the custom language menu was exercised in the running browser. The mobile header overflow was corrected. Public provider testing is intentionally pending at the user’s request. Frontend runs at http://localhost:3000 .
+
+## Vercel import handoff
+
+Follow README.md for the exact Vercel settings, Corepack environment flag, private credentials and post-deployment smoke checks. Node 24.x and pnpm 12.5.1 are pinned. Long narration responses use a bounded WAV stream with no Content-Length header, and all provider functions have a 60-second budget. Live provider acceptance stays pending at the user’s request; no cloud deployment is performed by this preparation.
+
+Deployment preparation verified: frozen-lockfile install passed under Node 24.17.0 / pnpm 12.5.1; 86 tests passed across 14 files; the production build passed. The generated functions configuration includes maxDuration 60 for all six provider endpoints. Actual Vercel deployment and live provider acceptance remain pending.

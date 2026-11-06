@@ -75,7 +75,6 @@ core-innovation-development/
 │   ├── heirloom-vault-store.ts    # ✅ React state + seed data (Indian family)
 │   ├── local-crypto.ts            # ✅ AES-256-GCM browser encryption
 │   ├── voice-synth.ts             # Offline demo TTS (kept as labelled fallback)
-│   ├── utils.ts                   # cn() helper
 │   ├── product-contracts.ts       # (Phase 1) Zod schemas — all API contracts
 │   ├── gnani/
 │   │   ├── client.ts              # (Phase 1) callGnaniWithRetry + GnaniUpstreamError
@@ -282,8 +281,12 @@ PBKDF2 iterations: **210,000**, as specified for this project. The unlock round 
 | tlock decryption on old devices | Low | Web Crypto API baseline is 2015+; acceptable |
 | Vercel cold start on voice routes | Low | 3–5s acceptable for voice operations |
 | localStorage quota (~5MB) | Low | Only metadata stored; audio never in localStorage |
-| Local Git history created; remote not connected | Low | Connect the user-owned repository before deployment |
+| GitHub main synchronized | Low | Import msrishav-28/living-heirloom into Vercel |
 
 ## 13. Implementation and release handoff — 6 November 2026
 
 See `RELEASE_CHECKLIST.md` for verified checks, live acceptance steps, and deployment limits. The user explicitly approved correcting language and privacy claims: there are ten supported entries, and no provider zero-retention/training guarantee is asserted. The existing language list entries and the legacy crypto module remain intact. The real capsule workflow uses `lib/crypto/heirloom-vault.ts`; labelled previews retain the older demo helpers. Working drafts are local but not encrypted at rest. Real timelock opening requires the public drand beacon.
+
+## 14. Vercel deployment configuration
+
+`README.md` contains the current import procedure. Node.js 24.x and pnpm 12.5.1 are pinned to the verified local toolchain. Enable Corepack in Vercel, use the Next.js preset and repository root, and import `main` from `msrishav-28/living-heirloom`. `vercel.json` selects the framework and build command. All six provider routes explicitly select Node.js and a 60-second budget. WAVs are validated with a 15 MB application cap and returned through a bounded streaming response rather than a buffered response that can exceed hosting limits. Live provider acceptance remains deferred by the user.
