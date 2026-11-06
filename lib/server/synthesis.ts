@@ -1,6 +1,7 @@
 import { ApiFailure, gnani } from './api'
 import { normalizeTextForGnaniTTS } from '@/lib/gnani/text-normalizer'
 import type { GnaniSpeakerEmbedding } from '@/lib/product-contracts'
+import { wavResponse } from './wav-response'
 export async function synthesize(input: {
   text: string
   lang: string
@@ -40,16 +41,5 @@ export async function synthesize(input: {
     JSON.stringify(body),
     true,
   )
-  const bytes = await response.arrayBuffer()
-  if (
-    bytes.byteLength < 44 ||
-    bytes.byteLength > 15000000 ||
-    String.fromCharCode(...new Uint8Array(bytes, 0, 4)) !== 'RIFF'
-  )
-    throw new ApiFailure(
-      'GNANI_UPSTREAM_ERROR',
-      'Voice service did not return WAV audio',
-      502,
-    )
-  return new Response(bytes, { headers: { 'Content-Type': 'audio/wav' } })
+  return wavResponse(response)
 }
