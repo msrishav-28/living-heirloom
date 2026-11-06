@@ -1,0 +1,21 @@
+{
+  "name": "Living Heirloom",
+  "short_name": "Living Heirloom",
+  "description": "Empathetic AI interviews, 3-clip voice preservation across nine Indian languages and English powered by Gnani AI, and AES-256 time-locked heirloom capsules.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafc",
+  "theme_color": "#ff5924",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
