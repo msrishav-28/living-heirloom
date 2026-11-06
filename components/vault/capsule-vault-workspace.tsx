@@ -509,22 +509,15 @@ export function CapsuleVaultWorkspace({
               {activeCapsule.isSealed ? (
                 <div className="mt-6 rounded-[14px] bg-[var(--card)] p-6">
                   <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                    <div className="flex items-center gap-4">
-                      <img
-                        src="/images/pressed-botanical-seal.png"
-                        alt="Wax-sealed heirloom envelope"
-                        className="h-16 w-16 rounded-[10px] object-cover"
-                      />
-                      <div>
-                        <p className="font-nunito text-[12px] font-semibold tracking-[0.09em] text-[var(--accent-ember)] uppercase">
-                          Cryptographic Seal Intact
-                        </p>
-                        <p className="font-inter-ui mt-0.5 text-[14px] text-[var(--ink-body-slate)]">
-                          Scheduled for{' '}
-                          <strong>{activeCapsule.milestoneLabel}</strong> on{' '}
-                          {activeCapsule.unlockDate}.
-                        </p>
-                      </div>
+                    <div>
+                      <p className="font-nunito text-[12px] font-semibold tracking-[0.09em] text-[var(--accent-ember)] uppercase">
+                        Cryptographic Seal Intact
+                      </p>
+                      <p className="font-inter-ui mt-0.5 text-[14px] text-[var(--ink-body-slate)]">
+                        Scheduled for{' '}
+                        <strong>{activeCapsule.milestoneLabel}</strong> on{' '}
+                        {activeCapsule.unlockDate}.
+                      </p>
                     </div>
 
                     <button

@@ -98,6 +98,8 @@ Provider requests use server-only credentials, reject credential-forwarding redi
 
 Keep the existing editorial typography, warm palette, four workspace tabs and card surfaces. Use shared light/dark variables rather than hard-coded white surfaces. The shared dropdown owns keyboard selection, dismissal and focus restoration. Do not reintroduce native selects into these flows.
 
+The owner requested removal of AI-generated decorative images. The hero and capsule previews now use their existing text and themed surfaces without photographic artwork. Do not reintroduce generated photography or illustration; preserve functional icons and waveform branding.
+
 Respect reduced motion. Hidden scrollbar tracks must not disable scrolling or keyboard access; forced-color mode restores native scroll affordances. Test desktop and narrow layouts, light/dark themes, focus, errors and long translated text.
 
 ## Verification and contributions

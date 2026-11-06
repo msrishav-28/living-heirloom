@@ -51,8 +51,7 @@ const HERO_SAMPLES: ArchiveSample[] = [
     langCode: 'hi-IN',
     tone: 'lullaby',
     toneLabel: 'Gentle Lullaby',
-    quote:
-      'हमारी कहानियाँ और हमारा प्यार हमेशा तुम्हारे साथ रहेंगे।',
+    quote: 'हमारी कहानियाँ और हमारा प्यार हमेशा तुम्हारे साथ रहेंगे।',
     waveform: [
       30, 45, 62, 54, 78, 85, 60, 42, 68, 90, 76, 52, 48, 72, 88, 64, 50, 74,
       82, 58, 40, 66, 84, 70, 46, 38, 62, 76, 54, 40, 30, 22,
@@ -107,7 +106,7 @@ export function HeroSection({ onOpenStudio }: HeroSectionProps) {
       () => {
         setIsPlaying(false)
         setPlayProgress(0)
-      }
+      },
     )
   }
 
@@ -357,27 +356,18 @@ export function HeroSection({ onOpenStudio }: HeroSectionProps) {
                   </div>
                 </div>
 
-                {/* Sage Card (#dde9d3) — Physical Still-Life Artifact */}
-                <div className="pastel-card-sage flex flex-col justify-between gap-5 p-7 sm:flex-row sm:items-center sm:p-[36px]">
-                  <div className="flex-1">
-                    <span className="font-nunito-eyebrow">
-                      3 CLIPS · PERMANENT VOICE
-                    </span>
-                    <h3 className="font-louize-card mt-2 text-[26px] text-[var(--ink-slate-navy)]">
-                      45 seconds of speech preserves a lifetime of cadence.
-                    </h3>
-                    <p className="font-avenir-body mt-2 text-[15px] text-[var(--ink-body-slate)]">
-                      Cloned with Gnani AI acoustic modeling and sealed with
-                      your family’s private AES-256 key.
-                    </p>
-                  </div>
-                  <div className="animate-calm-float h-28 w-28 shrink-0 overflow-hidden rounded-[12px] bg-[var(--card)] p-1.5">
-                    <img
-                      src="/images/heirloom-reel.png"
-                      alt="Sunlit micro-cassette tape and handwritten heirloom letter on warm linen"
-                      className="h-full w-full rounded-[8px] object-cover"
-                    />
-                  </div>
+                {/* Sage Card (#dde9d3) — Voice Preservation */}
+                <div className="pastel-card-sage p-7 sm:p-[36px]">
+                  <span className="font-nunito-eyebrow">
+                    3 CLIPS · PERMANENT VOICE
+                  </span>
+                  <h3 className="font-louize-card mt-2 text-[26px] text-[var(--ink-slate-navy)]">
+                    45 seconds of speech preserves a lifetime of cadence.
+                  </h3>
+                  <p className="font-avenir-body mt-2 text-[15px] text-[var(--ink-body-slate)]">
+                    Cloned with Gnani AI acoustic modeling and sealed with your
+                    family’s private AES-256 key.
+                  </p>
                 </div>
               </div>
             </div>

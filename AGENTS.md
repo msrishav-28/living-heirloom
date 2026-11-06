@@ -52,6 +52,7 @@ The [developer guide](docs/DEVELOPMENT.md) describes setup and module ownership.
 ## Frontend quality
 
 - Preserve the existing design system. Use shared theme variables for surfaces, text, borders, disabled states, and translucent colors in both themes.
+- Do not reintroduce AI-generated decorative images. The owner requested their removal; use the existing typography, surfaces, icons, and waveform branding.
 - Use the shared keyboard-accessible custom picker. Keep scrolling functional when hiding visual scrollbars and retain forced-color accessibility affordances.
 - Keep semantic HTML, visible focus states, sufficient contrast, keyboard navigation, and appropriate ARIA. Respect reduced motion for waveform and transition effects.
 - Verify affected flows at desktop and mobile sizes in both themes. Do not report browser checks that were not performed.

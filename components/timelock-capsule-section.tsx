@@ -59,13 +59,13 @@ const MILESTONE_PRESETS: MilestonePreset[] = [
 export function TimelockCapsuleSection() {
   const [selectedPresetIdx, setSelectedPresetIdx] = useState(0)
   const [recipientName, setRecipientName] = useState(
-    MILESTONE_PRESETS[0].recipient
+    MILESTONE_PRESETS[0].recipient,
   )
   const [unlockDateLabel, setUnlockDateLabel] = useState(
-    MILESTONE_PRESETS[0].unlockYear
+    MILESTONE_PRESETS[0].unlockYear,
   )
   const [messageText, setMessageText] = useState(
-    MILESTONE_PRESETS[0].defaultMessage
+    MILESTONE_PRESETS[0].defaultMessage,
   )
   const [tone, setTone] = useState<EmotionalTone>(MILESTONE_PRESETS[0].tone)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -100,7 +100,7 @@ export function TimelockCapsuleSection() {
       tone,
       currentPreset.langCode,
       undefined,
-      () => setIsPlaying(false)
+      () => setIsPlaying(false),
     )
   }
 
@@ -143,7 +143,11 @@ export function TimelockCapsuleSection() {
       id="time-lock-studio"
       className="w-full bg-[var(--canvas-blush)] py-24 sm:py-[115px]"
     >
-      <div className="mx-auto max-w-[1440px] px-5 sm:px-10"><p className="mb-4 text-sm">Interactive sample: browser speech and an encryption preview. For a real dated timelock and playable recordings, open the Capsule Vault.</p>
+      <div className="mx-auto max-w-[1440px] px-5 sm:px-10">
+        <p className="mb-4 text-sm">
+          Interactive sample: browser speech and an encryption preview. For a
+          real dated timelock and playable recordings, open the Capsule Vault.
+        </p>
         {/* Section Eyebrow + Louize Display Heading */}
         <div className="max-w-[960px]">
           <CalmReveal distance={14}>
@@ -246,7 +250,8 @@ export function TimelockCapsuleSection() {
                 htmlFor="capsule-message-textarea"
                 className="font-nunito block text-[12px] font-semibold tracking-[0.09em] text-[var(--muted-foreground)] uppercase"
               >
-                Heirloom Message (Spoken in Preserved Voice & Sealed with AES-256)
+                Heirloom Message (Spoken in Preserved Voice & Sealed with
+                AES-256)
               </label>
               <textarea
                 id="capsule-message-textarea"
@@ -289,7 +294,7 @@ export function TimelockCapsuleSection() {
             </div>
           </CalmReveal>
 
-          {/* Right 5 Cols: Sage Card (#dde9d3) Wax-Sealed Envelope Artifact */}
+          {/* Right 5 Cols: Sage Card (#dde9d3) Capsule Preview */}
           <CalmReveal
             delay={220}
             distance={24}
@@ -307,20 +312,13 @@ export function TimelockCapsuleSection() {
                 </span>
               </div>
 
-              <div className="mt-6 flex items-center gap-4 rounded-[12px] bg-[var(--card)] p-4">
-                <img
-                  src="/images/pressed-botanical-seal.png"
-                  alt="Wax-sealed cream linen envelope with pressed olive branch and vintage pocket watch"
-                  className="animate-calm-float h-20 w-20 shrink-0 rounded-[8px] object-cover"
-                />
-                <div>
-                  <h3 className="font-louize-card text-[24px] text-[var(--ink-slate-navy)]">
-                    {recipientName}
-                  </h3>
-                  <p className="font-inter-ui text-[14px] text-[var(--muted-foreground)]">
-                    Milestone: {unlockDateLabel} · Voice: {currentPreset.langName}
-                  </p>
-                </div>
+              <div className="mt-6 rounded-[12px] bg-[var(--card)] p-4">
+                <h3 className="font-louize-card text-[24px] text-[var(--ink-slate-navy)]">
+                  {recipientName}
+                </h3>
+                <p className="font-inter-ui text-[14px] text-[var(--muted-foreground)]">
+                  Milestone: {unlockDateLabel} · Voice: {currentPreset.langName}
+                </p>
               </div>
 
               {sealedPacket ? (
